@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+# Copyright 2018, Joren Van Onder
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import argparse
 import operator
 
 OPS = (operator.add, operator.sub, operator.mul, operator.truediv)
@@ -87,12 +102,19 @@ def solve(target, selection, operations):
     return False
 
 
-target = 346
-selection = [6, 5, 4, 5, 9, 75]
-selection.reverse()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Find a solution to the Countdown numbers game. Numbers are given in the order they come up."
+    )
+    parser.add_argument(
+        "selection", help="The 6 numbers in the selection.", type=int, nargs=6
+    )
+    parser.add_argument("target", help="Target that should be found.", type=int)
+    args = parser.parse_args()
+    args.selection.reverse()
 
-print("{:^24}".format(target))
-for number in selection:
-    print("{:^4}".format(number), end="")
-print("\n")
-print(operations_to_string(solve(target, selection, False)))
+    print("{:^24}".format(args.target))
+    for number in args.selection:
+        print("{:^4}".format(number), end="")
+    print("\n")
+    print(operations_to_string(solve(args.target, args.selection, False)))
