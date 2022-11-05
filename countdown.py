@@ -142,7 +142,9 @@ def solveBFS(target, selection):
                     except ZeroDivisionError:
                         continue
                     # queue.append((subres, new_numbers + [subres], path + [f"{n1} {OPS_TO_STR[op]} {n2}"]))
-                    queue.append((subres, new_numbers + [subres], path + [(n1, op, n2, subres)]))
+                    queue.append(
+                        (subres, new_numbers + [subres], path + [(n1, op, n2, subres)])
+                    )
 
     return False
 
@@ -151,7 +153,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Find a solution to the Countdown numbers game. Numbers are given in the order they come up."
     )
-    parser.add_argument("--solver", choices=["bfs", "dfs"], default="bfs", help="Use a bfs (will find shortest) or dfs approach (will find weird)")
+    parser.add_argument(
+        "--solver",
+        choices=["bfs", "dfs"],
+        default="bfs",
+        help="Use a bfs (will find shortest) or dfs approach (will find weird)",
+    )
     parser.add_argument(
         "selection", help="The 6 numbers in the selection.", type=int, nargs=6
     )
@@ -164,7 +171,11 @@ if __name__ == "__main__":
         print("{:^4}".format(number), end="")
     print("\n")
 
-    res = solveBFS(args.target, args.selection) if args.solver == "bfs" else solve(args.target, args.selection, False)
+    res = (
+        solveBFS(args.target, args.selection)
+        if args.solver == "bfs"
+        else solve(args.target, args.selection, False)
+    )
 
     if not res:
         print("impossible")
