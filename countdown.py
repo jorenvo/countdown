@@ -16,10 +16,13 @@
 import argparse
 import math
 import operator
+import os
+import sys
 from collections import deque
+from pprint import pprint
 
 OPS = (operator.add, operator.sub, operator.mul, operator.truediv)
-ASSOCIATIVE_OPERATIONS = (operator.add, operator.mul)
+ASSOCIATIVE_OPERATIONS = {operator.add, operator.mul}
 
 OPS_TO_STR = {
     operator.add: "+",
@@ -111,12 +114,19 @@ def _get_biggest(path):
     return biggest
 
 
-def solve_bfs(target, selection, biggest):
-    queue = deque()
-    used_pairs = set()
-    largest_path = [[None, None, None, -math.inf]]
+class Number:
+    def __init__(self, n):
+        self.n = n
 
-    queue.append((0, selection[:], []))
+
+def solve_bfs(target, selection, biggest, find_all):
+    queue = deque()
+    largest_path = [[None, None, None, -math.inf]]
+    used_paths = set()
+    all_solution_paths = []
+
+    # Number to have an address to put in used_pairs
+    queue.append((0, [Number(n) for n in selection], []))
 
     while queue:
         so_far, numbers, path = queue.popleft()
@@ -125,34 +135,52 @@ def solve_bfs(target, selection, biggest):
             if biggest:
                 largest_path = max(largest_path, path, key=_get_biggest)
                 continue
+            elif find_all:
+                all_solution_paths.append(path)
+                continue
             else:
-                return path
+                return [path]
 
         for i, n1 in enumerate(numbers):
             for j, n2 in enumerate(numbers):
                 if i == j:
                     continue
 
-                if (n1, n2) in used_pairs:
-                    continue
-
-                used_pairs.add((n1, n2))
-
-                new_numbers = []
-                for k, new_n in enumerate(numbers):
-                    if k != i and k != j:
-                        new_numbers.append(new_n)
+                new_numbers = [n for k, n in enumerate(numbers) if k != i and k != j]
 
                 for op in OPS:
                     try:
-                        subres = op(n1, n2)
+                        subres = op(n1.n, n2.n)
                     except ZeroDivisionError:
                         continue
+
+                    if subres <= 0 or int(subres) != subres:
+                        continue
+
+                    new_path = path + [(n1.n, op, n2.n, subres)]
+                    new_path_set = frozenset(new_path)
+
+                    if op in ASSOCIATIVE_OPERATIONS:
+                        assoc_path_set = frozenset(path + [(n2.n, op, n1.n, subres)])
+                        if assoc_path_set in used_paths:
+                            continue
+
+                    if new_path_set in used_paths:
+                        continue
+
+                    used_paths.add(new_path_set)
                     queue.append(
-                        (subres, new_numbers + [subres], path + [(n1, op, n2, subres)])
+                        (
+                            subres,
+                            new_numbers + [Number(subres)],
+                            new_path,
+                        )
                     )
 
-    return largest_path if largest_path[0][0] is not None else False
+    if all:
+        return all_solution_paths
+    else:
+        return [largest_path] if largest_path[0][0] is not None else False
 
 
 if __name__ == "__main__":
@@ -173,6 +201,12 @@ if __name__ == "__main__":
         help="Find the solution with the longest sub result (only implemented in bfs solver).",
     )
     parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="Output all possible solutions (only implemented in bfs solver).",
+    )
+    parser.add_argument(
         "selection", help="The 6 numbers in the selection.", type=int, nargs=6
     )
     parser.add_argument("target", help="Target that should be found.", type=int)
@@ -184,8 +218,16 @@ if __name__ == "__main__":
         print("{:^4}".format(number), end="")
     print("\n")
 
+    if (args.biggest or args.all) and args.solver != "bfs":
+        print("Options are only supported in bfs solver")
+        sys.exit(os.EX_USAGE)
+
+    if args.biggest and args.all:
+        print("Biggest and all can't be used together")
+        sys.exit(os.EX_USAGE)
+
     res = (
-        solve_bfs(args.target, args.selection, args.biggest)
+        solve_bfs(args.target, args.selection, args.biggest, args.all)
         if args.solver == "bfs"
         else solve(args.target, args.selection, False)
     )
@@ -193,4 +235,10 @@ if __name__ == "__main__":
     if not res:
         print("impossible")
     else:
-        print(operations_to_string(res))
+        if args.solver == "bfs":
+            for i, sol in enumerate(res):
+                print(f"Solution #{i}:")
+                print(operations_to_string(sol))
+                print()
+        else:
+            print(operations_to_string(res))
