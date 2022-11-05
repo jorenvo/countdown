@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import math
 import operator
 from collections import deque
 
@@ -103,22 +104,29 @@ def solve(target, selection, operations):
     return False
 
 
-def solveBFS(target, selection):
+def _get_biggest(path):
+    biggest = -math.inf
+    for segment in path:
+        biggest = max(biggest, segment[3])
+    return biggest
+
+
+def solve_bfs(target, selection, biggest):
     queue = deque()
     used_pairs = set()
-
-    # ex: 100 [1, 2, 3, 4, ...]
-    # queue = [(remaining, selection, path), ...]
-    # [(100, [1, 2, 3, 4, ...], ()]
+    largest_path = [[None, None, None, -math.inf]]
 
     queue.append((0, selection[:], []))
 
     while queue:
-        # print(queue)
         so_far, numbers, path = queue.popleft()
 
         if so_far == target:
-            return path
+            if biggest:
+                largest_path = max(largest_path, path, key=_get_biggest)
+                continue
+            else:
+                return path
 
         for i, n1 in enumerate(numbers):
             for j, n2 in enumerate(numbers):
@@ -135,18 +143,16 @@ def solveBFS(target, selection):
                     if k != i and k != j:
                         new_numbers.append(new_n)
 
-                # print("new numbers:", new_numbers)
                 for op in OPS:
                     try:
                         subres = op(n1, n2)
                     except ZeroDivisionError:
                         continue
-                    # queue.append((subres, new_numbers + [subres], path + [f"{n1} {OPS_TO_STR[op]} {n2}"]))
                     queue.append(
                         (subres, new_numbers + [subres], path + [(n1, op, n2, subres)])
                     )
 
-    return False
+    return largest_path if largest_path[0][0] is not None else False
 
 
 if __name__ == "__main__":
@@ -154,10 +160,17 @@ if __name__ == "__main__":
         description="Find a solution to the Countdown numbers game. Numbers are given in the order they come up."
     )
     parser.add_argument(
+        "-s",
         "--solver",
         choices=["bfs", "dfs"],
         default="bfs",
         help="Use a bfs (will find shortest) or dfs approach (will find weird)",
+    )
+    parser.add_argument(
+        "-b",
+        "--biggest",
+        action="store_true",
+        help="Find the solution with the longest sub result (only implemented in bfs solver).",
     )
     parser.add_argument(
         "selection", help="The 6 numbers in the selection.", type=int, nargs=6
@@ -172,7 +185,7 @@ if __name__ == "__main__":
     print("\n")
 
     res = (
-        solveBFS(args.target, args.selection)
+        solve_bfs(args.target, args.selection, args.biggest)
         if args.solver == "bfs"
         else solve(args.target, args.selection, False)
     )
