@@ -15,6 +15,7 @@
 
 import argparse
 import operator
+from collections import deque
 
 OPS = (operator.add, operator.sub, operator.mul, operator.truediv)
 ASSOCIATIVE_OPERATIONS = (operator.add, operator.mul)
@@ -102,10 +103,55 @@ def solve(target, selection, operations):
     return False
 
 
+def solveBFS(target, selection):
+    queue = deque()
+    used_pairs = set()
+
+    # ex: 100 [1, 2, 3, 4, ...]
+    # queue = [(remaining, selection, path), ...]
+    # [(100, [1, 2, 3, 4, ...], ()]
+
+    queue.append((0, selection[:], []))
+
+    while queue:
+        # print(queue)
+        so_far, numbers, path = queue.popleft()
+
+        if so_far == target:
+            return path
+
+        for i, n1 in enumerate(numbers):
+            for j, n2 in enumerate(numbers):
+                if i == j:
+                    continue
+
+                if (n1, n2) in used_pairs:
+                    continue
+
+                used_pairs.add((n1, n2))
+
+                new_numbers = []
+                for k, new_n in enumerate(numbers):
+                    if k != i and k != j:
+                        new_numbers.append(new_n)
+
+                # print("new numbers:", new_numbers)
+                for op in OPS:
+                    try:
+                        subres = op(n1, n2)
+                    except ZeroDivisionError:
+                        continue
+                    # queue.append((subres, new_numbers + [subres], path + [f"{n1} {OPS_TO_STR[op]} {n2}"]))
+                    queue.append((subres, new_numbers + [subres], path + [(n1, op, n2, subres)]))
+
+    return False
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Find a solution to the Countdown numbers game. Numbers are given in the order they come up."
     )
+    parser.add_argument("--solver", choices=["bfs", "dfs"], default="bfs", help="Use a bfs (will find shortest) or dfs approach (will find weird)")
     parser.add_argument(
         "selection", help="The 6 numbers in the selection.", type=int, nargs=6
     )
@@ -117,4 +163,10 @@ if __name__ == "__main__":
     for number in args.selection:
         print("{:^4}".format(number), end="")
     print("\n")
-    print(operations_to_string(solve(args.target, args.selection, False)))
+
+    res = solveBFS(args.target, args.selection) if args.solver == "bfs" else solve(args.target, args.selection, False)
+
+    if not res:
+        print("impossible")
+    else:
+        print(operations_to_string(res))
