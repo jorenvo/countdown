@@ -132,11 +132,13 @@ def solve_bfs(target, selection, biggest, find_all):
         so_far, numbers, path = queue.popleft()
 
         if so_far == target:
+            path = remove_unused_results(path, target)
             if biggest:
                 largest_path = max(largest_path, path, key=_get_biggest)
                 continue
             elif find_all:
-                all_solution_paths.append(path)
+                if path not in all_solution_paths:
+                    all_solution_paths.append(path)
                 continue
             else:
                 return [path]
