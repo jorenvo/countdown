@@ -154,7 +154,12 @@ def solve_bfs(target, selection, biggest, find_all):
                     except ZeroDivisionError:
                         continue
 
-                    if subres <= 0 or int(subres) != subres:
+                    if (
+                        subres <= 0
+                        or int(subres) != subres
+                        or subres == n1.n
+                        or subres == n2.n
+                    ):
                         continue
 
                     new_path = path + [(n1.n, op, n2.n, subres)]
