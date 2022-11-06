@@ -121,7 +121,7 @@ class Number:
 
 def solve_bfs(target, selection, biggest, find_all):
     queue = deque()
-    largest_path = [[None, None, None, -math.inf]]
+    largest_path = [(None, None, None, -math.inf)]
     used_paths = set()
     all_solution_paths = []
 
@@ -177,7 +177,7 @@ def solve_bfs(target, selection, biggest, find_all):
                         )
                     )
 
-    if all:
+    if find_all:
         return all_solution_paths
     else:
         return [largest_path] if largest_path[0][0] is not None else False
